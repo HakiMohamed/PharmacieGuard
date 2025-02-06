@@ -94,11 +94,40 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # Pull la dernière image
             docker pull ${{ env.DOCKER_IMAGE }}:latest
+            
+            # Arrêter et supprimer l'ancien conteneur s'il existe
             docker stop guardmed-api || true
             docker rm guardmed-api || true
+            
+            # Lancer le nouveau conteneur avec les variables d'environnement
             docker run -d \
               --name guardmed-api \
               -p 3000:3000 \
+              -e FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+              -e FIREBASE_PRIVATE_KEY_ID=${{ secrets.FIREBASE_PRIVATE_KEY_ID }} \
+              -e FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }} \
+              -e FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }} \
+              -e FIREBASE_CLIENT_ID=${{ secrets.FIREBASE_CLIENT_ID }} \
+              -e FIREBASE_AUTH_URI=${{ secrets.FIREBASE_AUTH_URI }} \
+              -e FIREBASE_TOKEN_URI=${{ secrets.FIREBASE_TOKEN_URI }} \
+              -e FIREBASE_AUTH_CERT_URL=${{ secrets.FIREBASE_AUTH_CERT_URL }} \
+              -e FIREBASE_CLIENT_CERT_URL=${{ secrets.FIREBASE_CLIENT_CERT_URL }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e MAIL_HOST=${{ secrets.MAIL_HOST }} \
+              -e MAIL_PORT=${{ secrets.MAIL_PORT }} \
+              -e MAIL_USER=${{ secrets.MAIL_USER }} \
+              -e MAIL_PASS=${{ secrets.MAIL_PASS }} \
+              -e MAIL_FROM=${{ secrets.MAIL_FROM }} \
               --restart unless-stopped \
-              ${{ env.DOCKER_IMAGE }}:latest 
+              ${{ env.DOCKER_IMAGE }}:latest
+            
+            # Vérifier que le conteneur est bien lancé
+            docker ps | grep guardmed-api
+            
+            # Attendre que l'application démarre
+            sleep 10
+            
+            # Vérifier que l'application répond
+            curl -f http://localhost:3000/api || echo "Application not responding on port 3000" 
