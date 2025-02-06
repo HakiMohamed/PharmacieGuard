@@ -18,8 +18,11 @@ COPY package*.json ./
 RUN npm install --only=production
 
 COPY --from=builder /app/dist ./dist
-COPY .env .env
+COPY .env .
+
+# Copier les templates d'email
+COPY src/mail/templates ./src/mail/templates
 
 EXPOSE 3000
 
-CMD ["npm", "run", "start:prod"]
+CMD ["node", "dist/main"]
