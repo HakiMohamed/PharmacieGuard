@@ -62,4 +62,8 @@ COPY src/mail/templates ./src/mail/templates
 
 EXPOSE 3000
 
+# Définir les variables d'environnement
+ENV NODE_ENV=production
+ENV PORT=3000
+
 CMD ["node", "dist/main"]

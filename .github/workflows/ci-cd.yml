@@ -97,37 +97,50 @@ jobs:
             # Pull la dernière image
             docker pull ${{ env.DOCKER_IMAGE }}:latest
             
-            # Arrêter et supprimer l'ancien conteneur s'il existe
+            # Arrêter et supprimer l'ancien conteneur
             docker stop guardmed-api || true
             docker rm guardmed-api || true
             
-            # Lancer le nouveau conteneur avec les variables d'environnement
+            # Créer un fichier .env pour le conteneur
+            cat > .env << EOL
+            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+            FIREBASE_PRIVATE_KEY_ID=${{ secrets.FIREBASE_PRIVATE_KEY_ID }}
+            FIREBASE_PRIVATE_KEY='${{ secrets.FIREBASE_PRIVATE_KEY }}'
+            FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+            FIREBASE_CLIENT_ID=${{ secrets.FIREBASE_CLIENT_ID }}
+            FIREBASE_AUTH_URI=${{ secrets.FIREBASE_AUTH_URI }}
+            FIREBASE_TOKEN_URI=${{ secrets.FIREBASE_TOKEN_URI }}
+            FIREBASE_AUTH_CERT_URL=${{ secrets.FIREBASE_AUTH_CERT_URL }}
+            FIREBASE_CLIENT_CERT_URL=${{ secrets.FIREBASE_CLIENT_CERT_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            MAIL_HOST=${{ secrets.MAIL_HOST }}
+            MAIL_PORT=${{ secrets.MAIL_PORT }}
+            MAIL_USER=${{ secrets.MAIL_USER }}
+            MAIL_PASS=${{ secrets.MAIL_PASS }}
+            MAIL_FROM=${{ secrets.MAIL_FROM }}
+            EOL
+            
+            # Lancer le nouveau conteneur
             docker run -d \
               --name guardmed-api \
               -p 3000:3000 \
-              -e FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
-              -e FIREBASE_PRIVATE_KEY_ID=${{ secrets.FIREBASE_PRIVATE_KEY_ID }} \
-              -e FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }} \
-              -e FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }} \
-              -e FIREBASE_CLIENT_ID=${{ secrets.FIREBASE_CLIENT_ID }} \
-              -e FIREBASE_AUTH_URI=${{ secrets.FIREBASE_AUTH_URI }} \
-              -e FIREBASE_TOKEN_URI=${{ secrets.FIREBASE_TOKEN_URI }} \
-              -e FIREBASE_AUTH_CERT_URL=${{ secrets.FIREBASE_AUTH_CERT_URL }} \
-              -e FIREBASE_CLIENT_CERT_URL=${{ secrets.FIREBASE_CLIENT_CERT_URL }} \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              -e MAIL_HOST=${{ secrets.MAIL_HOST }} \
-              -e MAIL_PORT=${{ secrets.MAIL_PORT }} \
-              -e MAIL_USER=${{ secrets.MAIL_USER }} \
-              -e MAIL_PASS=${{ secrets.MAIL_PASS }} \
-              -e MAIL_FROM=${{ secrets.MAIL_FROM }} \
+              --env-file .env \
               --restart unless-stopped \
               ${{ env.DOCKER_IMAGE }}:latest
             
-            # Vérifier que le conteneur est bien lancé
+            # Vérifier les logs du conteneur
+            echo "Container logs:"
+            sleep 5
+            docker logs guardmed-api
+            
+            # Vérifier que le conteneur est en cours d'exécution
+            echo "Container status:"
             docker ps | grep guardmed-api
             
-            # Attendre que l'application démarre
-            sleep 10
+            # Vérifier les ports en écoute
+            echo "Listening ports:"
+            netstat -tulpn | grep LISTEN
             
-            # Vérifier que l'application répond
-            curl -f http://localhost:3000/api || echo "Application not responding on port 3000" 
+            # Tester l'API
+            echo "Testing API:"
+            curl -v http://localhost:3000/api || echo "API not responding" 
