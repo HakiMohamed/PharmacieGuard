@@ -77,6 +77,7 @@ jobs:
             FIREBASE_TOKEN_URI=${{ secrets.FIREBASE_TOKEN_URI }}
             FIREBASE_AUTH_CERT_URL=${{ secrets.FIREBASE_AUTH_CERT_URL }}
             FIREBASE_CLIENT_CERT_URL=${{ secrets.FIREBASE_CLIENT_CERT_URL }}
+            FIRESTORE_DATABASE_URL=${{ secrets.FIRESTORE_DATABASE_URL }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             MAIL_HOST=${{ secrets.MAIL_HOST }}
             MAIL_PORT=${{ secrets.MAIL_PORT }}
