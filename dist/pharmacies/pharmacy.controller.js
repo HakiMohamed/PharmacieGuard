@@ -41,6 +41,23 @@ let PharmacyController = class PharmacyController {
             throw new common_1.HttpException('Failed to fetch pharmacies', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    async getNearbyGuardPharmacies(lat, lng) {
+        try {
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lng);
+            if (isNaN(latitude) || isNaN(longitude)) {
+                throw new common_1.BadRequestException('Invalid latitude or longitude');
+            }
+            const pharmacies = await this.pharmacyService.getNearbyGuardPharmacies(latitude, longitude);
+            if (!pharmacies || pharmacies.length === 0) {
+                return [];
+            }
+            return pharmacies;
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to fetch nearby pharmacies', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     async findOne(id) {
         try {
             const pharmacy = await this.pharmacyService.getPharmacyById(id);
@@ -86,6 +103,14 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], PharmacyController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('nearby-guard'),
+    __param(0, (0, common_1.Query)('lat')),
+    __param(1, (0, common_1.Query)('lng')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], PharmacyController.prototype, "getNearbyGuardPharmacies", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

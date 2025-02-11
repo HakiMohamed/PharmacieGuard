@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PharmacyService = void 0;
 const common_1 = require("@nestjs/common");
 const pharmacy_repository_1 = require("../repositories/pharmacy.repository");
+const helpers_1 = require("./helpers/helpers");
 let PharmacyService = class PharmacyService {
     constructor(pharmacyRepository) {
         this.pharmacyRepository = pharmacyRepository;
@@ -57,6 +58,27 @@ let PharmacyService = class PharmacyService {
     }
     async deletePharmacy(id) {
         return this.pharmacyRepository.delete(id);
+    }
+    async getNearbyGuardPharmacies(latitude, longitude) {
+        try {
+            const pharmacies = await this.pharmacyRepository.findAll();
+            if (!pharmacies || pharmacies.length === 0) {
+                return [];
+            }
+            const nearbyPharmacies = pharmacies
+                .filter(pharmacy => pharmacy.is_guard === true)
+                .map(pharmacy => ({
+                ...pharmacy,
+                distance: (0, helpers_1.calculateDistance)(latitude, longitude, pharmacy.location.lat, pharmacy.location.lng)
+            }))
+                .filter(pharmacy => pharmacy.distance <= 10)
+                .sort((a, b) => a.distance - b.distance);
+            return nearbyPharmacies;
+        }
+        catch (error) {
+            console.error('Error in getNearbyGuardPharmacies:', error);
+            throw error;
+        }
     }
 };
 exports.PharmacyService = PharmacyService;

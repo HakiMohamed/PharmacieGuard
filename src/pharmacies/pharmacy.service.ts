@@ -3,6 +3,8 @@ import { PharmacyRepository } from '../repositories/pharmacy.repository';
 import { PharmacyInterface } from '../interfaces/pharmacy.interface';
 import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
+import { calculateDistance } from './helpers/helpers';
+
 
 @Injectable()
 export class PharmacyService {
@@ -57,5 +59,37 @@ export class PharmacyService {
 
     async deletePharmacy(id: string): Promise<void> {
         return this.pharmacyRepository.delete(id);
+    }
+
+
+
+    async getNearbyGuardPharmacies(latitude: number, longitude: number): Promise<PharmacyInterface[]> {
+        try {
+            const pharmacies = await this.pharmacyRepository.findAll();
+            
+            if (!pharmacies || pharmacies.length === 0) {
+                return [];
+            }
+    
+            
+            const nearbyPharmacies = pharmacies
+                .filter(pharmacy => pharmacy.is_guard === true)
+                .map(pharmacy => ({
+                    ...pharmacy,
+                    distance: calculateDistance(
+                        latitude,
+                        longitude,
+                        pharmacy.location.lat,
+                        pharmacy.location.lng
+                    )
+                }))
+                .filter(pharmacy => pharmacy.distance <= 10) 
+                .sort((a, b) => a.distance - b.distance);
+    
+            return nearbyPharmacies;
+        } catch (error) {
+            console.error('Error in getNearbyGuardPharmacies:', error);
+            throw error;
+        }
     }
 } 

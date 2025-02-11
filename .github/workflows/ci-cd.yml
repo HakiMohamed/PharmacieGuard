@@ -7,6 +7,8 @@ on:
     branches: [ main ]
 
 
+
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -26,6 +28,8 @@ jobs:
       - name: Run tests
         run: npm run test
         
+
+
 
   build-and-push:
     needs: test
@@ -67,6 +71,8 @@ jobs:
             MAIL_PASS=${{ secrets.MAIL_PASS }}
             MAIL_FROM=${{ secrets.MAIL_FROM }}
 
+
+
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -78,14 +84,15 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Pull la dernière image
+            
+
             docker pull ${{ secrets.DOCKER_IMAGE }}:latest
             
-            # Arrêter et supprimer l'ancien conteneur
+
             docker stop guardmed-api || true
             docker rm guardmed-api || true
             
-            # Créer un fichier .env pour le conteneur
+            
             cat > .env << EOL
             FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
             FIREBASE_PRIVATE_KEY_ID=${{ secrets.FIREBASE_PRIVATE_KEY_ID }}
@@ -104,6 +111,8 @@ jobs:
             MAIL_FROM=${{ secrets.MAIL_FROM }}
             EOL
             
+
+
             # Lancer le nouveau conteneur
             docker run -d \
               --name guardmed-api \
@@ -113,18 +122,16 @@ jobs:
               ${{ secrets.DOCKER_IMAGE }}:latest
             
 
-            # Vérifier les logs du conteneur
+            
             echo "Container logs:"
             sleep 5
             docker logs guardmed-api
             
-            # Vérifier que le conteneur est en cours d'exécution
+            
             echo "Container status:"
             docker ps | grep guardmed-api
             
-            # Vérifier les ports en écoute
-            echo "Listening ports:"
-            netstat -tulpn | grep LISTEN
+           
             
             # Tester l'API
             echo "Testing API:"

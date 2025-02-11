@@ -9,11 +9,14 @@ import {
     HttpException,
     HttpStatus,
     UseGuards,
+    BadRequestException,
+    Query,
 } from '@nestjs/common';
 import { PharmacyService } from './pharmacy.service';
 import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 import { PharmacyResponseDto } from './dto/pharmacy-response.dto';
+import { PharmacyInterface } from '../interfaces/pharmacy.interface';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('pharmacies')
@@ -42,6 +45,34 @@ export class PharmacyController {
             throw new HttpException(
                 'Failed to fetch pharmacies',
                 HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    @Get('nearby-guard')
+    async getNearbyGuardPharmacies(
+        @Query('lat') lat: string,
+        @Query('lng') lng: string,
+    ): Promise<PharmacyInterface[]> {
+        try {
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lng);
+        
+            if (isNaN(latitude) || isNaN(longitude)) {
+                throw new BadRequestException('Invalid latitude or longitude');
+            }
+        
+            const pharmacies = await this.pharmacyService.getNearbyGuardPharmacies(latitude, longitude);
+            
+            if (!pharmacies || pharmacies.length === 0) {
+                return []; // Return empty array instead of 404
+            }
+            
+            return pharmacies;
+        } catch (error) {
+            throw new HttpException(
+                error.message || 'Failed to fetch nearby pharmacies',
+                error.status || HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
     }
@@ -90,4 +121,8 @@ export class PharmacyController {
             );
         }
     }
+
+
+
+   
 } 
